@@ -5,10 +5,36 @@ Add-Type -AssemblyName System.Web
 $ProgressPreference = 'SilentlyContinue'
 
 $game_path = ""
-$data_path = "D:\Program Files\miHoYo Launcher\games\Star Rail Game\StarRail_Data\webCaches\2.37.1.0\Cache\Cache_Data\data_2"
 
 Write-Host "Gacha link acquisition program by dinosaur" -ForegroundColor DarkYellow
-
+Write-Host "抽卡链接为白色字体，若没有显示，请打开游戏查看抽卡记录重试" -ForegroundColor DarkYellow
+# 自动寻找版本号最大的文件夹的函数
+function Get-LatestVersionFolder {
+    param(
+        [string]$Path
+    )
+    
+    if (Test-Path $Path) {
+        $versionFolders = Get-ChildItem -Path $Path -Directory | Where-Object {
+            $_.Name -match '^\d+\.\d+\.\d+\.\d+$'
+        } | ForEach-Object {
+            $version = $_.Name -split '\.'
+            [PSCustomObject]@{
+                Folder = $_
+                Major = [int]$version[0]
+                Minor = [int]$version[1]
+                Build = [int]$version[2]
+                Revision = [int]$version[3]
+            }
+        }
+        
+        if ($versionFolders) {
+            $latest = $versionFolders | Sort-Object Major, Minor, Build, Revision -Descending | Select-Object -First 1
+            return $latest.Folder.FullName
+        }
+    }
+    return $null
+}
 
 if ($args.Length -eq 0) {
     $app_data = [Environment]::GetFolderPath('ApplicationData')
@@ -54,7 +80,34 @@ if ([string]::IsNullOrEmpty($game_path)) {
 
 $copy_path = [IO.Path]::GetTempFileName()
 
-$data_path = "$game_path/Star Rail Game/StarRail_Data/webCaches/2.37.1.0/Cache/Cache_Data/data_2"
+# 自动获取最新版本的webCaches路径
+$webCachesPath = "$game_path/Star Rail Game/StarRail_Data/webCaches"
+$latestVersionPath = Get-LatestVersionFolder -Path $webCachesPath
+
+if ($latestVersionPath) {
+    $data_path = "$latestVersionPath/Cache/Cache_Data/data_2"
+} else {
+    # 如果找不到版本文件夹，使用默认路径
+    $data_path = "$webCachesPath/2.37.1.0/Cache/Cache_Data/data_2"
+    Write-Warning "未能找到最新的版本文件夹，使用默认路径"
+}
+
+# 同样处理硬编码的路径
+$defaultWebCachesPath = "D:\Program Files\miHoYo Launcher\games\Star Rail Game\StarRail_Data\webCaches"
+$latestDefaultVersionPath = Get-LatestVersionFolder -Path $defaultWebCachesPath
+
+if ($latestDefaultVersionPath) {
+    $default_data_path = "$latestDefaultVersionPath/Cache/Cache_Data/data_2"
+} else {
+    $default_data_path = "D:\Program Files\miHoYo Launcher\games\Star Rail Game\StarRail_Data\webCaches\2.43.1.0\Cache\Cache_Data\data_2"
+    Write-Warning "未能找到默认路径下的最新版本文件夹，使用默认版本路径"
+}
+
+# 使用自动检测到的路径
+if (Test-Path $default_data_path) {
+    $data_path = $default_data_path
+}
+
 Copy-Item -Path $data_path -Destination $copy_path
 Write-Host "data:$data_path" -ForegroundColor DarkGreen
 Write-Host "copy:$copy_path" -ForegroundColor DarkGreen

@@ -2,7 +2,7 @@
 
 ## 简介
 
-本仓库包含了用于获取miHoYo游戏抽卡链接的脚本。脚本命名方式为游戏名+脚本更新时间。适用于windows命令行运行。
+本仓库包含了用于获取miHoYo游戏抽卡链接的脚本。脚本命名方式为游戏名。适用于windows命令行运行。
 
 ## 功能概述
 
@@ -28,7 +28,7 @@
 若已知游戏路径，可将其作为参数传入脚本，例如：
 
 ```powershell
-.\StarRail20250704.ps1 "D:/Program Files/miHoYo Launcher/games"
+.\StarRail.ps1 "D:/Program Files/miHoYo Launcher/games"
 ```
 
 ## 错误处理
